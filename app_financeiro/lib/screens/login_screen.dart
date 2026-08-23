@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:local_auth/local_auth.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,6 +12,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _senhaController = TextEditingController();
+  final LocalAuthentication _auth = LocalAuthentication();
   bool _obscureSenha = true;
   String? _mensagemErro;
   bool _carregando = false;
@@ -57,6 +59,36 @@ class _LoginScreenState extends State<LoginScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Login com Google ainda não configurado')),
     );
+  }
+    void _loginComBiometria() async {
+    try {
+      final disponivel = await _auth.canCheckBiometrics;
+      if (!disponivel) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Biometria não disponível neste dispositivo')),
+        );
+        return;
+      }
+
+      final autenticado = await _auth.authenticate(
+        localizedReason: 'Use sua biometria para entrar no Valora',
+      );
+
+      if (!mounted) return;
+
+      if (autenticado) {
+        // TODO: validar sessão com o back-end depois da biometria confirmada
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Login com biometria realizado (mock)!')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro na biometria: $e')),
+      );
+    }
   }
 
   void _abrirEsqueciSenha() {
@@ -211,6 +243,17 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: _loginComGoogle,
                     icon: const Icon(Icons.g_mobiledata, size: 28),
                     label: const Text('Entrar com Google'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                  ),
+                                    const SizedBox(height: 12),
+
+                  // Botão biometria
+                  OutlinedButton.icon(
+                    onPressed: _loginComBiometria,
+                    icon: const Icon(Icons.fingerprint, size: 24),
+                    label: const Text('Entrar com biometria'),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
