@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
+import 'register_screen.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -26,32 +28,42 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _fazerLogin() async {
+   void _fazerLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() {
-      _carregando = true;
-      _mensagemErro = null;
-    });
+    setState(() => _carregando = true);
 
+    // MOCK: simula chamada ao back-end do Luís (POST /auth/login)
+    // Como ainda não existe nenhum usuário cadastrado de verdade,
+    // qualquer tentativa de login retorna "conta não encontrada"
     await Future.delayed(const Duration(seconds: 1));
 
     if (!mounted) return;
 
-    setState(() {
-      _carregando = false;
-    });
+    setState(() => _carregando = false);
 
-    if (_emailController.text.isNotEmpty) {
-      // TODO: navegar para o Dashboard quando essa tela existir
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login realizado (mock)!')),
-      );
-    } else {
-      setState(() {
-        _mensagemErro = 'E-mail ou senha inválidos.';
-      });
-    }
+    _mostrarErro('Conta não encontrada. Verifique seus dados ou crie uma conta.');
+  }
+
+  void _mostrarErro(String mensagem) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: const Color(0xFF1A1A1A),
+        content: Row(
+          children: [
+            const Icon(Icons.error_outline, color: Colors.redAccent),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(mensagem, style: const TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: Colors.redAccent, width: 1),
+        ),
+      ),
+    );
   }
 
   void _loginComGoogle() {
@@ -91,21 +103,10 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _abrirEsqueciSenha() {
-    // TODO: criar tela/fluxo de recuperação de senha
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Recuperar senha'),
-        content: const Text(
-          'Aqui vai entrar o fluxo de recuperação de senha (envio de e-mail/código), assim que o back-end tiver esse endpoint pronto.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Fechar'),
-          ),
-        ],
+    void _abrirEsqueciSenha() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const ForgotPasswordScreen(),
       ),
     );
   }
@@ -147,11 +148,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       prefixIcon: Icon(Icons.email_outlined),
                       border: OutlineInputBorder(),
                     ),
-                    validator: (value) {
+                                      validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Informe seu e-mail';
                       }
-                      if (!value.contains('@')) {
+                      final regexEmail = RegExp(r'^[\w\.\-]+@[\w\-]+\.[\w\.\-]+$');
+                      if (!regexEmail.hasMatch(value)) {
                         return 'E-mail inválido';
                       }
                       return null;
@@ -176,9 +178,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         },
                       ),
                     ),
-                    validator: (value) {
+                                      validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Informe sua senha';
+                      }
+                      if (value.length < 8) {
+                        return 'Senha inválida';
                       }
                       return null;
                     },
@@ -267,9 +272,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       const Text('Não tem conta?'),
                       TextButton(
-                        onPressed: () {
-                          // TODO: navegar para a tela de Cadastro quando ela existir
-                        },
+                                   onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const RegisterScreen(),
+                ),
+              );
+            },
                         child: const Text('Cadastre-se'),
                       ),
                     ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'verify_code_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -13,12 +14,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _senhaController = TextEditingController();
   final _confirmarSenhaController = TextEditingController();
-  final _rendaController = TextEditingController();
+
 
   bool _obscureSenha = true;
   bool _obscureConfirmarSenha = true;
   bool _carregando = false;
-  String? _mensagemErro;
 
   static const roxo = Color(0xFF8A2BE2);
 
@@ -28,34 +28,98 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _senhaController.dispose();
     _confirmarSenhaController.dispose();
-    _rendaController.dispose();
     super.dispose();
   }
 
   void _criarConta() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() {
-      _carregando = true;
-      _mensagemErro = null;
-    });
+    setState(() => _carregando = true);
 
     // MOCK: aqui vai a chamada real ao back-end do Luís (POST /auth/register)
     // com body: { nome, email, senha, renda_mensal }
     await Future.delayed(const Duration(seconds: 1));
 
     if (!mounted) return;
+    setState(() => _carregando = false);
 
-    setState(() {
-      _carregando = false;
-    });
+    await _mostrarSucesso();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Conta criada com sucesso (mock)!')),
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (context) => VerifyCodeScreen(email: _emailController.text),
+      ),
     );
+  }
 
-    // TODO: navegar de volta para o Login (ou já logar automaticamente)
-    Navigator.of(context).pop();
+  Future<void> _mostrarSucesso() {
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        Future.delayed(const Duration(seconds: 2), () {
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          }
+        });
+        return Dialog(
+          backgroundColor: const Color(0xFF1A1A1A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: const BorderSide(color: roxo, width: 1),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: roxo.withOpacity(0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.check_rounded, color: roxo, size: 36),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Conta criada com sucesso!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _mostrarErro(String mensagem) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: const Color(0xFF1A1A1A),
+        content: Row(
+          children: [
+            const Icon(Icons.error_outline, color: Colors.redAccent),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(mensagem, style: const TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: Colors.redAccent, width: 1),
+        ),
+      ),
+    );
   }
 
   @override
@@ -93,6 +157,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   TextFormField(
                     controller: _nomeController,
                     keyboardType: TextInputType.name,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     decoration: const InputDecoration(
                       labelText: 'Nome completo',
                       prefixIcon: Icon(Icons.person_outline),
@@ -111,6 +176,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     decoration: const InputDecoration(
                       labelText: 'E-mail',
                       prefixIcon: Icon(Icons.email_outlined),
@@ -120,43 +186,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       if (value == null || value.isEmpty) {
                         return 'Informe seu e-mail';
                       }
-                      if (!value.contains('@')) {
-                        return 'E-mail inválido';
+                      final regexEmail = RegExp(r'^[\w\.\-]+@[\w\-]+\.[\w\.\-]+$');
+                      if (!regexEmail.hasMatch(value)) {
+                        return 'E-mail não identificado, verifique o formato';
                       }
                       return null;
                     },
                   ),
                   const SizedBox(height: 16),
 
-                  // Renda mensal
-                  TextFormField(
-                    controller: _rendaController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
-                      labelText: 'Renda mensal',
-                      prefixIcon: Icon(Icons.attach_money),
-                      prefixText: 'R\$ ',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Informe sua renda mensal';
-                      }
-                      final numero = double.tryParse(value.replaceAll(',', '.'));
-                      if (numero == null || numero <= 0) {
-                        return 'Valor inválido';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
+              
 
                   // Senha
                   TextFormField(
                     controller: _senhaController,
                     obscureText: _obscureSenha,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     decoration: InputDecoration(
                       labelText: 'Senha',
+                      helperText: 'Mínimo 8 caracteres, com letra e número',
+                      helperMaxLines: 2,
                       prefixIcon: const Icon(Icons.lock_outline),
                       border: const OutlineInputBorder(),
                       suffixIcon: IconButton(
@@ -172,8 +221,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       if (value == null || value.isEmpty) {
                         return 'Informe uma senha';
                       }
-                      if (value.length < 6) {
-                        return 'Mínimo de 6 caracteres';
+                      if (value.length < 8) {
+                        return 'Senha inválida: mínimo de 8 caracteres';
+                      }
+                      if (!RegExp(r'[A-Za-z]').hasMatch(value)) {
+                        return 'Senha inválida: precisa ter uma letra';
+                      }
+                      if (!RegExp(r'[0-9]').hasMatch(value)) {
+                        return 'Senha inválida: precisa ter um número';
                       }
                       return null;
                     },
@@ -184,6 +239,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   TextFormField(
                     controller: _confirmarSenhaController,
                     obscureText: _obscureConfirmarSenha,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     decoration: InputDecoration(
                       labelText: 'Confirmar senha',
                       prefixIcon: const Icon(Icons.lock_outline),
@@ -199,23 +255,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                     validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Confirme sua senha';
+                      }
                       if (value != _senhaController.text) {
                         return 'As senhas não coincidem';
                       }
                       return null;
                     },
                   ),
-
-                  // Mensagem de erro
-                  if (_mensagemErro != null) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      _mensagemErro!,
-                      style: const TextStyle(color: Colors.red),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-
                   const SizedBox(height: 24),
 
                   // Botão criar conta
