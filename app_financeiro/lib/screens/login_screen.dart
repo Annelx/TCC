@@ -97,7 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: 56,
                       child: Image.asset('assets/images/valora_logo.png'),
                     ),
-                  ),r
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     'Seja Bem-vindo',
