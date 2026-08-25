@@ -57,7 +57,6 @@ def create_verification_token(
     )
 
     db.add(verification_token)
-    db.commit()
 
     return token
 
