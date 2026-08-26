@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
+import 'onboarding/onboarding_flow.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -42,10 +43,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _carregando = false);
 
-    _mostrarErro('Conta não encontrada. Verifique seus dados ou crie uma conta.');
-  }
+   Navigator.of(context).pushReplacement( MaterialPageRoute( builder: (context) => OnboardingFlow(emailInicial: _emailController.text), ), );
 
-  void _mostrarErro(String mensagem) {
+   void _mostrarErro(String mensagem) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         backgroundColor: const Color(0xFF1A1A1A),
@@ -65,6 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+   }
 
   void _loginComGoogle() {
     // TODO: integrar login social de verdade (Firebase Auth / Google Sign-In)

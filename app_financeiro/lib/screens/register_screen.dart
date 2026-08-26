@@ -12,6 +12,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nomeController = TextEditingController();
   final _emailController = TextEditingController();
+  final _telefoneController = TextEditingController();
   final _senhaController = TextEditingController();
   final _confirmarSenhaController = TextEditingController();
 
@@ -26,6 +27,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void dispose() {
     _nomeController.dispose();
     _emailController.dispose();
+    _telefoneController.dispose();
     _senhaController.dispose();
     _confirmarSenhaController.dispose();
     super.dispose();
@@ -37,7 +39,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _carregando = true);
 
     // MOCK: aqui vai a chamada real ao back-end do Luís (POST /auth/register)
-    // com body: { nome, email, senha, renda_mensal }
+    // com body: { nome, email, telefone, senha, renda_mensal }
     await Future.delayed(const Duration(seconds: 1));
 
     if (!mounted) return;
@@ -195,7 +197,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 16),
 
-              
+                  // Telefone
+                  TextFormField(
+                    controller: _telefoneController,
+                    keyboardType: TextInputType.phone,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                    decoration: const InputDecoration(
+                      labelText: 'Telefone',
+                      hintText: '(00) 00000-0000',
+                      prefixIcon: Icon(Icons.phone_outlined),
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Informe seu telefone';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
 
                   // Senha
                   TextFormField(
