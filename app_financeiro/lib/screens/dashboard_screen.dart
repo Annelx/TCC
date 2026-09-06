@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../widgets/recent_transactions_section.dart';
+import 'notification_center_screen.dart';
 
 /// Tela inicial do app depois do onboarding: resumo do mês, progresso das
 /// metas, gráfico de gastos por categoria e transações recentes.
@@ -40,11 +41,45 @@ class DashboardScreen extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           children: [
             // Cabeçalho
-            Text('Olá, $apelido! 👋', style: Theme.of(context).textTheme.headlineSmall),
-            const SizedBox(height: 4),
-            Text('Aqui está o resumo da sua vida financeira.',
-                style: Theme.of(context).textTheme.bodyMedium),
-            const SizedBox(height: 24),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Olá, $apelido! 👋', style: Theme.of(context).textTheme.headlineSmall),
+                      const SizedBox(height: 4),
+                      Text('Aqui está o resumo da sua vida financeira.',
+                          style: Theme.of(context).textTheme.bodyMedium),
+                    ],
+                  ),
+                ),
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const NotificationCenterScreen()),
+                        );
+                      },
+                      icon: const Icon(Icons.notifications_outlined, color: Colors.white, size: 26),
+                    ),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        width: 9,
+                        height: 9,
+                        decoration: const BoxDecoration(color: roxo, shape: BoxShape.circle),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
 
             // Resumo do mês
             Container(

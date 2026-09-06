@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:quick_actions/quick_actions.dart';
 import 'screens/splash_screen.dart';
 import 'screens/add_transaction_screen.dart';
@@ -14,7 +15,11 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await NotificationService.inicializar();
   NotificationService.onAcaoTocada = (acao) {
-    if (acao == NotificationService.acaoNovaMeta) {
+    if (acao == NotificationService.acaoNovaTransacao) {
+      navigatorKey.currentState?.push(
+        MaterialPageRoute(builder: (_) => const AddTransactionScreen()),
+      );
+    } else if (acao == NotificationService.acaoNovaMeta) {
       navigatorKey.currentState?.push(
         MaterialPageRoute(builder: (_) => const AddMetaScreen()),
       );
@@ -81,6 +86,13 @@ class _MyAppState extends State<MyApp> {
       navigatorKey: navigatorKey,
       title: 'App Financeiro',
       debugShowCheckedModeBanner: false,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('pt', 'BR')],
+      locale: const Locale('pt', 'BR'),
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,

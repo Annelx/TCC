@@ -1,4 +1,4 @@
-/// Representa uma conta bancária conectada via Open Finance (Pluggy).
+/// Representa uma conta bancária conectada via Pluggy Connect.
 /// Quando o Luís integrar de verdade, os campos abaixo devem bater com o
 /// que a API da Pluggy devolve (accountId, institution.name, balance, etc).
 class ContaBancaria {

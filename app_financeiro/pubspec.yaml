@@ -31,12 +31,16 @@ dependencies:
   flutter:
     sdk: flutter
 
+  flutter_localizations:
+    sdk: flutter
+
   local_auth: ^2.3.0
-  image_picker: ^1.1.2 
+  image_picker: ^1.1.2
   fl_chart: ^0.69.0
-  quick_actions: ^1.0.7 
+  quick_actions: ^1.0.7
   flutter_local_notifications: ^18.0.1
   shared_preferences: ^2.3.3
+  url_launcher: ^6.3.1
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -52,6 +56,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -97,3 +102,9 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/valora_logo.png"
+  min_sdk_android: 21

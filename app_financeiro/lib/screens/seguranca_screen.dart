@@ -1,10 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 import 'change_password_screen.dart';
+import 'change_email_screen.dart';
+import 'change_phone_screen.dart';
 
-/// Tela "Segurança": liga/desliga login por biometria e permite trocar senha.
+/// Tela "Segurança": liga/desliga login por biometria, e permite trocar
+/// senha, e-mail e telefone (esses dois últimos exigem confirmar o valor
+/// atual antes de liberar a alteração).
 class SegurancaScreen extends StatefulWidget {
-  const SegurancaScreen({super.key});
+  final String emailAtual;
+  final String? telefoneAtual;
+  final ValueChanged<String> onEmailAlterado;
+  final ValueChanged<String> onTelefoneAlterado;
+
+  const SegurancaScreen({
+    super.key,
+    required this.emailAtual,
+    this.telefoneAtual,
+    required this.onEmailAlterado,
+    required this.onTelefoneAlterado,
+  });
 
   @override
   State<SegurancaScreen> createState() => _SegurancaScreenState();
@@ -69,6 +84,55 @@ class _SegurancaScreenState extends State<SegurancaScreen> {
     }
   }
 
+  Future<void> _alterarEmail() async {
+    final novoEmail = await Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (_) => ChangeEmailScreen(emailAtual: widget.emailAtual)),
+    );
+    if (novoEmail != null) {
+      widget.onEmailAlterado(novoEmail);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('E-mail alterado com sucesso')),
+        );
+      }
+    }
+  }
+
+  Future<void> _alterarTelefone() async {
+    final novoTelefone = await Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (_) => ChangePhoneScreen(telefoneAtual: widget.telefoneAtual ?? '')),
+    );
+    if (novoTelefone != null) {
+      widget.onTelefoneAlterado(novoTelefone);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Telefone alterado com sucesso')),
+        );
+      }
+    }
+  }
+
+  Widget _item({
+    required IconData icone,
+    required String titulo,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A1A),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        onTap: onTap,
+        leading: Icon(icone, color: roxo),
+        title: Text(titulo, style: const TextStyle(color: Colors.white, fontSize: 14)),
+        trailing: const Icon(Icons.chevron_right, color: Colors.white38),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,6 +142,7 @@ class _SegurancaScreenState extends State<SegurancaScreen> {
           padding: const EdgeInsets.all(20),
           children: [
             Container(
+              margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
                 color: const Color(0xFF1A1A1A),
                 borderRadius: BorderRadius.circular(12),
@@ -96,24 +161,13 @@ class _SegurancaScreenState extends State<SegurancaScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
-            Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF1A1A1A),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: ListTile(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
-                  );
-                },
-                leading: const Icon(Icons.lock_outline, color: roxo),
-                title: const Text('Alterar senha', style: TextStyle(color: Colors.white, fontSize: 14)),
-                trailing: const Icon(Icons.chevron_right, color: Colors.white38),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
+            _item(icone: Icons.lock_outline, titulo: 'Alterar senha', onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
+              );
+            }),
+            _item(icone: Icons.email_outlined, titulo: 'Alterar e-mail', onTap: _alterarEmail),
+            _item(icone: Icons.phone_outlined, titulo: 'Alterar telefone', onTap: _alterarTelefone),
           ],
         ),
       ),

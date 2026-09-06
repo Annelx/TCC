@@ -101,7 +101,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       valor: _parse(_valorController.text),
       data: _data,
       isEntrada: _isEntrada,
-      // Se está editando uma transação que já veio do Open Finance, mantém
+      // Se está editando uma transação que já veio do Pluggy Connect, mantém
       // a origem e o banco originais — só uma criada do zero aqui é 'manual'.
       origem: widget.transacaoParaEditar?.origem ?? OrigemTransacao.manual,
       nomeBanco: widget.transacaoParaEditar?.nomeBanco,

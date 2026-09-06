@@ -2,31 +2,22 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-/// Resultado devolvido pela tela de edição de perfil.
+/// Resultado devolvido pela tela de edição de perfil. Email e telefone só
+/// mudam de verdade pela tela de Segurança (com confirmação) — aqui eles
+/// só aparecem travados, de referência.
 class PerfilAtualizado {
   final String apelido;
-  final String email;
-  final String telefone;
   final File? foto;
 
   const PerfilAtualizado({
     required this.apelido,
-    required this.email,
-    required this.telefone,
     this.foto,
   });
 }
 
-/// Tela "Editar perfil" — permite trocar apelido, e-mail e foto.
-///
-/// Uso:
-///
-/// final resultado = await Navigator.of(context).push<PerfilAtualizado>(
-///   MaterialPageRoute(builder: (_) => EditProfileScreen(
-///     apelidoAtual: apelido,
-///     emailAtual: email,
-///   )),
-/// );
+/// Tela "Editar perfil" — permite trocar apelido e foto. E-mail e telefone
+/// ficam bloqueados aqui por segurança; a alteração deles é feita em
+/// Menu > Segurança, com confirmação do valor atual.
 class EditProfileScreen extends StatefulWidget {
   final String apelidoAtual;
   final String emailAtual;
@@ -50,16 +41,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   final _formKey = GlobalKey<FormState>();
   late final _apelidoController = TextEditingController(text: widget.apelidoAtual);
-  late final _emailController = TextEditingController(text: widget.emailAtual);
-  late final _telefoneController = TextEditingController(text: widget.telefoneAtual ?? '');
   File? _fotoNova;
   bool _salvando = false;
 
   @override
   void dispose() {
     _apelidoController.dispose();
-    _emailController.dispose();
-    _telefoneController.dispose();
     super.dispose();
   }
 
@@ -90,8 +77,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     Navigator.of(context).pop(
       PerfilAtualizado(
         apelido: _apelidoController.text.trim(),
-        email: _emailController.text.trim(),
-        telefone: _telefoneController.text.trim(),
         foto: _fotoNova,
       ),
     );
@@ -169,42 +154,31 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
                 const SizedBox(height: 16),
 
+                // E-mail — travado. Alteração só em Menu > Segurança.
                 TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
+                  initialValue: widget.emailAtual,
+                  enabled: false,
                   decoration: const InputDecoration(
                     labelText: 'E-mail',
                     prefixIcon: Icon(Icons.email_outlined),
+                    suffixIcon: Icon(Icons.lock_outline, size: 18),
                     border: OutlineInputBorder(),
+                    helperText: 'Para alterar, vá em Menu > Segurança',
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Informe seu e-mail';
-                    }
-                    final regexEmail = RegExp(r'^[\w\.\-]+@[\w\-]+\.[\w\.\-]+$');
-                    if (!regexEmail.hasMatch(value)) {
-                      return 'E-mail inválido';
-                    }
-                    return null;
-                  },
                 ),
                 const SizedBox(height: 16),
 
+                // Telefone — travado. Alteração só em Menu > Segurança.
                 TextFormField(
-                  controller: _telefoneController,
-                  keyboardType: TextInputType.phone,
+                  initialValue: widget.telefoneAtual ?? '',
+                  enabled: false,
                   decoration: const InputDecoration(
                     labelText: 'Telefone',
-                    hintText: '(00) 00000-0000',
                     prefixIcon: Icon(Icons.phone_outlined),
+                    suffixIcon: Icon(Icons.lock_outline, size: 18),
                     border: OutlineInputBorder(),
+                    helperText: 'Para alterar, vá em Menu > Segurança',
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Informe seu telefone';
-                    }
-                    return null;
-                  },
                 ),
                 const SizedBox(height: 32),
 

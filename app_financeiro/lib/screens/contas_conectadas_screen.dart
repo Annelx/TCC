@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/conta_bancaria_model.dart';
 import 'conectar_banco_screen.dart';
 
-/// Tela "Contas conectadas" (Open Finance): lista as contas bancárias
+/// Tela "Contas conectadas" (Pluggy Connect): lista as contas bancárias
 /// já conectadas e permite adicionar uma nova via Pluggy Connect.
 class ContasConectadasScreen extends StatefulWidget {
   const ContasConectadasScreen({super.key});
@@ -85,7 +85,7 @@ class _ContasConectadasScreenState extends State<ContasConectadasScreen> {
                       ),
                       const SizedBox(height: 8),
                       const Text(
-                        'Conecte suas contas via Open Finance e suas transações entram automaticamente.',
+                        'Conecte suas contas via Pluggy Connect e suas transações entram automaticamente.',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.white54, fontSize: 13),
                       ),

@@ -1,56 +1,34 @@
 import 'package:flutter/material.dart';
 import '../models/meta_model.dart';
-import 'add_meta_screen.dart';
 
 /// Tela "Metas" (aba do menu inferior): lista as metas do usuário com
-/// barra de progresso, e um botão flutuante "+" pra criar uma nova.
-///
-/// Por enquanto guarda as metas só em memória (mock). Quando o Luís tiver
-/// o endpoint pronto (GET /metas, POST /metas), trocar o estado local por
-/// uma chamada real — o TODO abaixo marca onde entra o POST.
-class MetasScreen extends StatefulWidget {
-  const MetasScreen({super.key});
+/// barra de progresso. A criação de novas metas acontece pelo botão "+"
+/// central da barra de navegação (controlado pelo MainNavigation) — essa
+/// tela só exibe a lista e recebe os dados de fora.
+class MetasScreen extends StatelessWidget {
+  final List<Meta> metas;
+  final VoidCallback onCriarMeta;
 
-  @override
-  State<MetasScreen> createState() => _MetasScreenState();
-}
+  const MetasScreen({super.key, required this.metas, required this.onCriarMeta});
 
-class _MetasScreenState extends State<MetasScreen> {
   static const roxo = Color(0xFF8A2BE2);
   static const _meses = [
     'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
     'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez',
   ];
 
-  final List<Meta> _metas = [];
-
-  Future<void> _abrirNovaMeta() async {
-    final novaMeta = await Navigator.of(context).push<Meta>(
-      MaterialPageRoute(builder: (_) => const AddMetaScreen()),
-    );
-    if (novaMeta != null) {
-      // TODO: enviar novaMeta.toJson() pro back-end (POST /metas)
-      setState(() => _metas.add(novaMeta));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Metas')),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _abrirNovaMeta,
-        backgroundColor: roxo,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
       body: SafeArea(
-        child: _metas.isEmpty
-            ? _EstadoVazio(onCriar: _abrirNovaMeta)
+        child: metas.isEmpty
+            ? _EstadoVazio(onCriar: onCriarMeta)
             : ListView.builder(
                 padding: const EdgeInsets.all(20),
-                itemCount: _metas.length,
+                itemCount: metas.length,
                 itemBuilder: (context, index) {
-                  final meta = _metas[index];
+                  final meta = metas[index];
                   final progresso = meta.progresso;
 
                   return Container(
@@ -153,7 +131,7 @@ class _EstadoVazio extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Crie sua primeira meta e acompanhe seu progresso por aqui.',
+              'Toque no botão "+" para criar sua primeira meta.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white54, fontSize: 13),
             ),

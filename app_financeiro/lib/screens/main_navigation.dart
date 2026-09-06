@@ -3,16 +3,20 @@ import 'dashboard_screen.dart';
 import 'metas_screen.dart';
 import 'add_meta_screen.dart';
 import 'add_transaction_screen.dart';
+import 'chat_ia_screen.dart';
 import 'mais_screen.dart';
 import '../services/notification_service.dart';
-import '../services/pending_transactions_service.dart';
 import '../models/meta_model.dart';
 import '../widgets/recent_transactions_section.dart';
 import '../widgets/transaction_history_screen.dart';
 
 /// Casca principal do app depois do login/onboarding: mantém a barra de
-/// navegação inferior (Início, Transações, Metas, Mais) e o botão central
-/// de ação rápida, trocando de tela sem perder o estado de cada aba.
+/// navegação inferior (Início, Transações, Metas, Menu) e o botão central,
+/// cuja ação muda de acordo com a aba selecionada:
+/// - Início: abre o Chat com IA
+/// - Transações: abre "Nova transação" direto
+/// - Metas: abre "Nova meta" direto
+/// - Menu: também abre o Chat com IA (padrão)
 class MainNavigation extends StatefulWidget {
   final String apelido;
   final String? email;
@@ -33,38 +37,12 @@ class _MainNavigationState extends State<MainNavigation> {
   String? _fotoPath;
   bool _notificacaoFixaAtiva = true;
   late List<TransacaoMock> _transacoes = List.of(RecentTransactionsSection.mock);
+  final List<Meta> _metas = [];
 
   @override
   void initState() {
     super.initState();
     _ativarNotificacaoFixa();
-    _carregarTransacoesPendentes();
-  }
-
-  Future<void> _carregarTransacoesPendentes() async {
-    final pendentes = await PendingTransactionsService.pegarERemoverTodas();
-    if (pendentes.isEmpty || !mounted) return;
-
-    final novas = pendentes.map((registro) {
-      // Formato salvo pela notificação: "ENTRADA|50 Alimentação" ou "SAIDA|50 Alimentação"
-      final partesRegistro = registro.split('|');
-      final isEntrada = partesRegistro.first == 'ENTRADA';
-      final texto = partesRegistro.length > 1 ? partesRegistro[1] : partesRegistro.first;
-
-      final partes = texto.trim().split(RegExp(r'\s+'));
-      final valor = double.tryParse(partes.first.replaceAll(',', '.')) ?? 0;
-      final categoria = partes.length > 1 ? partes.sublist(1).join(' ') : 'Outros';
-      return TransacaoMock(
-        categoria: categoria,
-        icone: Icons.bolt,
-        descricao: 'Adicionado pelo atalho',
-        valor: valor,
-        data: DateTime.now(),
-        isEntrada: isEntrada,
-      );
-    }).toList();
-
-    setState(() => _transacoes.insertAll(0, novas));
   }
 
   Future<void> _ativarNotificacaoFixa() async {
@@ -81,10 +59,48 @@ class _MainNavigationState extends State<MainNavigation> {
     setState(() => _notificacaoFixaAtiva = ativar);
   }
 
+  Future<void> _abrirNovaTransacao() async {
+    final novaTransacao = await Navigator.of(context).push<TransacaoMock>(
+      MaterialPageRoute(builder: (_) => const AddTransactionScreen()),
+    );
+    if (novaTransacao != null && mounted) {
+      setState(() => _transacoes.insert(0, novaTransacao));
+    }
+  }
+
+  Future<void> _abrirNovaMeta() async {
+    final novaMeta = await Navigator.of(context).push<Meta>(
+      MaterialPageRoute(builder: (_) => const AddMetaScreen()),
+    );
+    if (novaMeta != null && mounted) {
+      setState(() => _metas.add(novaMeta));
+    }
+  }
+
+  void _abrirChatIA() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const ChatIAScreen()),
+    );
+  }
+
+  /// Ação do botão central — muda de acordo com a aba selecionada.
+  void _acaoBotaoCentral() {
+    switch (_abaSelecionada) {
+      case 1:
+        _abrirNovaTransacao();
+        break;
+      case 2:
+        _abrirNovaMeta();
+        break;
+      default:
+        _abrirChatIA();
+    }
+  }
+
   List<Widget> get _telas => [
         DashboardScreen(apelido: _apelido, transacoes: _transacoes),
         TransactionHistoryScreen(transacoes: _transacoes),
-        const MetasScreen(),
+        MetasScreen(metas: _metas, onCriarMeta: _abrirNovaMeta),
         MaisScreen(
           apelido: _apelido,
           email: _email,
@@ -95,70 +111,36 @@ class _MainNavigationState extends State<MainNavigation> {
           onPerfilAtualizado: (resultado) {
             setState(() {
               _apelido = resultado.apelido;
-              _email = resultado.email;
-              _telefone = resultado.telefone;
               if (resultado.foto != null) _fotoPath = resultado.foto!.path;
             });
           },
+          onEmailAlterado: (novoEmail) {
+            setState(() => _email = novoEmail);
+          },
+          onTelefoneAlterado: (novoTelefone) {
+            setState(() => _telefone = novoTelefone);
+          },
         ),
       ];
-
-  void _abrirAcaoRapida() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF121212),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.swap_vert, color: roxo),
-                  title: const Text('Nova transação', style: TextStyle(color: Colors.white)),
-                  onTap: () async {
-                    Navigator.of(context).pop();
-                    await Navigator.of(context).push<TransacaoMock>(
-                      MaterialPageRoute(builder: (_) => const AddTransactionScreen()),
-                    );
-                    // TODO: quando as transações vierem do backend, atualizar
-                    // a lista da aba "Transações" aqui após salvar.
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.flag_outlined, color: roxo),
-                  title: const Text('Nova meta', style: TextStyle(color: Colors.white)),
-                  onTap: () async {
-                    Navigator.of(context).pop();
-                    final novaMeta = await Navigator.of(context).push<Meta>(
-                      MaterialPageRoute(builder: (_) => const AddMetaScreen()),
-                    );
-                    if (novaMeta != null && mounted) {
-                      setState(() => _abaSelecionada = 2); // vai pra aba Metas
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(index: _abaSelecionada, children: _telas),
       floatingActionButton: FloatingActionButton(
-        onPressed: _abrirAcaoRapida,
+        onPressed: _acaoBotaoCentral,
         backgroundColor: roxo,
         shape: const CircleBorder(),
-        child: const Icon(Icons.add, color: Colors.white),
+        child: _abaSelecionada == 1 || _abaSelecionada == 2
+            ? const Icon(Icons.add, color: Colors.white)
+            : Image.asset(
+                'assets/images/valora_logo.png',
+                width: 24,
+                height: 24,
+                color: Colors.white,
+                errorBuilder: (context, error, stack) =>
+                    const Icon(Icons.smart_toy_outlined, color: Colors.white),
+              ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(

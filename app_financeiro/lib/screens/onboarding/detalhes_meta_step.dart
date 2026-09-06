@@ -64,10 +64,12 @@ class _DetalhesMetaStepState extends State<DetalhesMetaStep> {
     return double.tryParse(normalizado) ?? 0;
   }
 
-  double get _faltaGuardar {
-    final guardar = _parse(_valorGuardarController.text);
+  bool get _temValorTotal => _valorTotalController.text.trim().isNotEmpty;
+
+  double get _faltaParaValorTotal {
+    final total = _parse(_valorTotalController.text);
     final atual = _parse(_valorAtualController.text);
-    final falta = guardar - atual;
+    final falta = total - atual;
     return falta < 0 ? 0 : falta;
   }
 
@@ -133,7 +135,7 @@ class _DetalhesMetaStepState extends State<DetalhesMetaStep> {
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               onChanged: (_) => setState(() {}),
               decoration: const InputDecoration(
-                labelText: 'Quanto você deseja guardar?',
+                labelText: 'Quanto você deseja guardar por mês?',
                 prefixText: 'R\$ ',
                 border: OutlineInputBorder(),
               ),
@@ -165,6 +167,7 @@ class _DetalhesMetaStepState extends State<DetalhesMetaStep> {
             TextFormField(
               controller: _valorTotalController,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              onChanged: (_) => setState(() {}),
               decoration: const InputDecoration(
                 labelText: 'Qual o valor total da sua meta? (opcional)',
                 prefixText: 'R\$ ',
@@ -191,26 +194,28 @@ class _DetalhesMetaStepState extends State<DetalhesMetaStep> {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
-
-            // Card "Falta guardar"
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: OnboardingStepScaffold.roxo.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: OnboardingStepScaffold.roxo.withOpacity(0.4)),
-              ),
-              child: Text(
-                'Falta guardar: R\$ ${_faltaGuardar.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+            // Card condicional: só aparece se o usuário preencher o valor
+            // total da meta, mostrando quanto falta pra bater ESSE valor.
+            if (_temValorTotal) ...[
+              const SizedBox(height: 20),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1A1A1A),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF2A2A2A)),
+                ),
+                child: Text(
+                  'Faltam R\$ ${_faltaParaValorTotal.toStringAsFixed(2)} para atingir o valor total da sua meta',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
               ),
-            ),
+            ],
           ],
         ),
       ),

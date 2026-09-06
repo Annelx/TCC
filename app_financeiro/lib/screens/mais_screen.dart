@@ -5,6 +5,12 @@ import 'edit_profile_screen.dart';
 import 'contas_conectadas_screen.dart';
 import 'seguranca_screen.dart';
 import 'notificacoes_screen.dart';
+import 'recomendacoes_screen.dart';
+import 'editar_renda_screen.dart';
+import 'editar_gastos_screen.dart';
+import 'editar_dificuldade_screen.dart';
+import 'central_ajuda_screen.dart';
+import 'sobre_screen.dart';
 import '../services/notification_service.dart';
 
 /// Aba "Menu": perfil do usuário e opções de configuração (notificações,
@@ -17,6 +23,8 @@ class MaisScreen extends StatelessWidget {
   final bool notificacaoFixaAtiva;
   final ValueChanged<bool> onAlterarNotificacaoFixa;
   final void Function(PerfilAtualizado) onPerfilAtualizado;
+  final ValueChanged<String> onEmailAlterado;
+  final ValueChanged<String> onTelefoneAlterado;
 
   const MaisScreen({
     super.key,
@@ -27,6 +35,8 @@ class MaisScreen extends StatelessWidget {
     required this.notificacaoFixaAtiva,
     required this.onAlterarNotificacaoFixa,
     required this.onPerfilAtualizado,
+    required this.onEmailAlterado,
+    required this.onTelefoneAlterado,
   });
 
   static const roxo = Color(0xFF8A2BE2);
@@ -175,7 +185,7 @@ class MaisScreen extends StatelessWidget {
               context,
               icone: Icons.account_balance_outlined,
               titulo: 'Contas conectadas',
-              subtitulo: 'Open Finance',
+              subtitulo: 'Pluggy Connect',
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const ContasConectadasScreen()),
@@ -186,10 +196,17 @@ class MaisScreen extends StatelessWidget {
               context,
               icone: Icons.fingerprint,
               titulo: 'Segurança',
-              subtitulo: 'Biometria e senha',
+              subtitulo: 'Biometria, senha, e-mail e telefone',
               onTap: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const SegurancaScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => SegurancaScreen(
+                      emailAtual: email ?? '',
+                      telefoneAtual: telefone,
+                      onEmailAlterado: onEmailAlterado,
+                      onTelefoneAlterado: onTelefoneAlterado,
+                    ),
+                  ),
                 );
               },
             ),
@@ -215,7 +232,43 @@ class MaisScreen extends StatelessWidget {
               icone: Icons.tune,
               titulo: 'Recomendações do app',
               subtitulo: 'Frequência e nível de intervenção',
-              onTap: () => _emBreve(context, 'Preferências do app'),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const RecomendacoesScreen()),
+                );
+              },
+            ),
+
+            _secao('PERFIL FINANCEIRO'),
+            _item(
+              context,
+              icone: Icons.payments_outlined,
+              titulo: 'Renda mensal',
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const EditarRendaScreen()),
+                );
+              },
+            ),
+            _item(
+              context,
+              icone: Icons.home_outlined,
+              titulo: 'Gastos fixos',
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const EditarGastosScreen()),
+                );
+              },
+            ),
+            _item(
+              context,
+              icone: Icons.psychology_outlined,
+              titulo: 'Dificuldade financeira',
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const EditarDificuldadeScreen()),
+                );
+              },
             ),
 
             _secao('SUPORTE'),
@@ -223,13 +276,21 @@ class MaisScreen extends StatelessWidget {
               context,
               icone: Icons.help_outline,
               titulo: 'Central de ajuda',
-              onTap: () => _emBreve(context, 'Central de ajuda'),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const CentralAjudaScreen()),
+                );
+              },
             ),
             _item(
               context,
               icone: Icons.info_outline,
               titulo: 'Sobre o Valora',
-              onTap: () => _emBreve(context, 'Sobre o app'),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const SobreScreen()),
+                );
+              },
             ),
 
             const SizedBox(height: 12),

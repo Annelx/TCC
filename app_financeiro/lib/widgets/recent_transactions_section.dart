@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'transaction_history_screen.dart';
 
 /// De onde a transação veio: digitada na mão pelo usuário, ou importada
-/// automaticamente via Open Finance (quando essa integração existir).
+/// automaticamente via Pluggy Connect (quando essa integração existir).
 enum OrigemTransacao { manual, openFinance }
 
 /// Modelo simples só pra esse esboço funcionar com dados fictícios.

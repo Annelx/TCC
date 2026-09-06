@@ -119,6 +119,29 @@ class _MetasStepState extends State<MetasStep> {
               Expanded(
                 child: ListView(
                   children: [
+                    // Opção "Sem metas no momento" — no topo, separada visualmente
+                    _ObjetivoChip(
+                      label: 'Sem metas no momento',
+                      selecionado: _semMetasSelecionado,
+                      onTap: _toggleSemMetas,
+                      icone: Icons.block_flipped,
+                      estiloAlternativo: true,
+                    ),
+                    if (_semMetasSelecionado)
+                      const Padding(
+                        padding: EdgeInsets.only(left: 4, bottom: 8),
+                        child: Text(
+                          'Sem problema! Você pode criar metas quando quiser, direto pelo app.',
+                          style: TextStyle(
+                            color: corTextoSecundario,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 8),
+                    const Divider(color: Color(0xFF2A2A2A), height: 1),
+                    const SizedBox(height: 16),
+
                     ..._objetivos.map((objetivo) {
                       final selecionado =
                           _objetivosSelecionados.contains(objetivo.id);
@@ -128,31 +151,6 @@ class _MetasStepState extends State<MetasStep> {
                         onTap: () => _toggleObjetivo(objetivo.id),
                       );
                     }),
-
-                    const SizedBox(height: 16),
-                    const Divider(color: Color(0xFF2A2A2A), height: 1),
-                    const SizedBox(height: 16),
-
-                    // Opção "Sem metas no momento" — visualmente separada
-                    _ObjetivoChip(
-                      label: 'Sem metas no momento',
-                      selecionado: _semMetasSelecionado,
-                      onTap: _toggleSemMetas,
-                      icone: Icons.block_flipped,
-                      estiloAlternativo: true,
-                    ),
-                    const SizedBox(height: 8),
-                    if (_semMetasSelecionado)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 4),
-                        child: Text(
-                          'Sem problema! Você pode criar metas quando quiser, direto pelo app.',
-                          style: TextStyle(
-                            color: corTextoSecundario,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
                     const SizedBox(height: 16),
                   ],
                 ),
