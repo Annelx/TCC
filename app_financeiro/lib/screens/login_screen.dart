@@ -1,3 +1,6 @@
+import '../services/auth_service.dart';
+import '../services/api_service.dart';
+import 'main_navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 import 'register_screen.dart';
@@ -29,21 +32,30 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-   void _fazerLogin() async {
-    if (!_formKey.currentState!.validate()) return;
-
+  Future<void> _fazerLogin() async {
+    if (!_formKey.currentState!.validate() || _carregando) return;
     setState(() => _carregando = true);
-
-    // MOCK: simula chamada ao back-end do Luís (POST /auth/login)
-    // Como ainda não existe nenhum usuário cadastrado de verdade,
-    // qualquer tentativa de login retorna "conta não encontrada"
-    await Future.delayed(const Duration(seconds: 1));
-
-    if (!mounted) return;
-
-    setState(() => _carregando = false);
-
-   Navigator.of(context).pushReplacement( MaterialPageRoute( builder: (context) => OnboardingFlow(emailInicial: _emailController.text), ), );
+    try {
+      final auth = AuthService();
+      await auth.login(email: _emailController.text.trim(), password: _senhaController.text);
+      final token = await auth.savedToken();
+      final user = await auth.getCurrentUser(token: token!);
+      if (!mounted) return;
+      final completed = user['onboarding_completed'] == true;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => completed
+          ? MainNavigation(apelido: (user['name'] ?? '').toString(), email: (user['email'] ?? '').toString())
+          : OnboardingFlow(emailInicial: (user['email'] ?? '').toString(), apelidoInicial: (user['name'] ?? '').toString())),
+        (_) => false,
+      );
+    } on ApiException catch (error) {
+      if (mounted) _mostrarErro(error.message);
+    } catch (_) {
+      if (mounted) _mostrarErro('Não foi possível conectar à API.');
+    } finally {
+      if (mounted) setState(() => _carregando = false);
+    }
+  }
 
    void _mostrarErro(String mensagem) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -65,7 +77,6 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-   }
 
   void _loginComGoogle() {
     // TODO: integrar login social de verdade (Firebase Auth / Google Sign-In)

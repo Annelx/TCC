@@ -1,3 +1,6 @@
+import '../services/auth_service.dart';
+import 'main_navigation.dart';
+import 'onboarding/onboarding_flow.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
@@ -49,10 +52,17 @@ class _SplashScreenState extends State<SplashScreen>
     await _giroController.forward();
     if (!mounted) return;
 
-    // 5. Navega para o Login com fade leve
+    // Valida o JWT armazenado antes de escolher a tela inicial.
+    Map<String, dynamic>? user;
+    try { user = await AuthService().restoreUser(); } catch (_) { /* Sem rede: login manual. */ }
+    if (!mounted) return;
+    final destination = user == null ? const LoginScreen()
+      : user['onboarding_completed'] == true
+        ? MainNavigation(apelido: (user['name'] ?? '').toString(), email: (user['email'] ?? '').toString())
+        : OnboardingFlow(apelidoInicial: (user['name'] ?? '').toString(), emailInicial: (user['email'] ?? '').toString());
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, animation, __) => const LoginScreen(),
+        pageBuilder: (_, animation, __) => destination,
         transitionsBuilder: (_, animation, __, child) {
           return FadeTransition(
             opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),

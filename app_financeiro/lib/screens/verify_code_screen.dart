@@ -1,3 +1,5 @@
+import '../services/auth_service.dart';
+import '../services/api_service.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -23,7 +25,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
 
   bool _carregando = false;
   String? _mensagemErro;
-  int _segundosParaReenviar = 30;
+  int _segundosParaReenviar = 60;
   Timer? _timer;
 
   @override
@@ -33,7 +35,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
   }
 
   void _iniciarContagemReenvio() {
-    _segundosParaReenviar = 30;
+    _segundosParaReenviar = 60;
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_segundosParaReenviar <= 1) {
@@ -71,32 +73,27 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
     }
   }
 
-  void _confirmarCodigo() async {
-    if (_codigoDigitado.length < quantidadeDigitos) {
+  Future<void> _confirmarCodigo() async {
+    if (_carregando) return;
+    if (_codigoDigitado.length != quantidadeDigitos) {
       setState(() => _mensagemErro = 'Digite o código completo');
       return;
     }
-
-    setState(() {
-      _carregando = true;
-      _mensagemErro = null;
-    });
-
-    // MOCK: aqui vai a chamada real ao back-end do Luís
-    // (POST /auth/verify-code, com { email, codigo })
-    await Future.delayed(const Duration(seconds: 1));
-
-    if (!mounted) return;
-
-    setState(() => _carregando = false);
-
-    await _mostrarSucesso();
-
-    if (!mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
-      (route) => false,
-    );
+    setState(() { _carregando = true; _mensagemErro = null; });
+    try {
+      await AuthService().verifyCode(email: widget.email, code: _codigoDigitado);
+      if (!mounted) return;
+      await _mostrarSucesso();
+      if (!mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()), (_) => false);
+    } on ApiException catch (error) {
+      if (mounted) setState(() => _mensagemErro = error.message);
+    } catch (_) {
+      if (mounted) setState(() => _mensagemErro = 'Não foi possível conectar à API.');
+    } finally {
+      if (mounted) setState(() => _carregando = false);
+    }
   }
 
   Future<void> _mostrarSucesso() {
@@ -147,14 +144,22 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
     );
   }
 
-  void _reenviarCodigo() {
-    if (_segundosParaReenviar > 0) return;
-
-    // TODO: chamar o back-end para reenviar o código de verdade
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Código reenviado (mock)!')),
-    );
-    _iniciarContagemReenvio();
+  Future<void> _reenviarCodigo() async {
+    if (_segundosParaReenviar > 0 || _carregando) return;
+    setState(() => _carregando = true);
+    try {
+      await AuthService().resendCode(email: widget.email);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Se o cadastro estiver pendente, um novo código será enviado.')));
+      _iniciarContagemReenvio();
+    } on ApiException catch (error) {
+      if (mounted) setState(() => _mensagemErro = error.message);
+    } catch (_) {
+      if (mounted) setState(() => _mensagemErro = 'Não foi possível conectar à API.');
+    } finally {
+      if (mounted) setState(() => _carregando = false);
+    }
   }
 
   @override
