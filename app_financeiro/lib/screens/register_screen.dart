@@ -1,3 +1,5 @@
+import '../services/auth_service.dart';
+import '../services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'verify_code_screen.dart';
 
@@ -33,26 +35,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  void _criarConta() async {
-    if (!_formKey.currentState!.validate()) return;
-
+  Future<void> _criarConta() async {
+    if (!_formKey.currentState!.validate() || _carregando) return;
     setState(() => _carregando = true);
-
-    // MOCK: aqui vai a chamada real ao back-end do Luís (POST /auth/register)
-    // com body: { nome, email, telefone, senha, renda_mensal }
-    await Future.delayed(const Duration(seconds: 1));
-
-    if (!mounted) return;
-    setState(() => _carregando = false);
-
-    await _mostrarSucesso();
-
-    if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (context) => VerifyCodeScreen(email: _emailController.text),
-      ),
-    );
+    try {
+      await AuthService().register(
+        name: _nomeController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _senhaController.text,
+      );
+      if (!mounted) return;
+      await _mostrarSucesso();
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
+        builder: (_) => VerifyCodeScreen(email: _emailController.text.trim()),
+      ));
+    } on ApiException catch (error) {
+      if (mounted) _mostrarErro(error.message);
+    } catch (_) {
+      if (mounted) _mostrarErro('Não foi possível conectar à API.');
+    } finally {
+      if (mounted) setState(() => _carregando = false);
+    }
   }
 
   Future<void> _mostrarSucesso() {
