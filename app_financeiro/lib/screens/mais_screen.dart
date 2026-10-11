@@ -1,5 +1,7 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
+
 import 'login_screen.dart';
 import 'edit_profile_screen.dart';
 import 'contas_conectadas_screen.dart';
@@ -69,8 +71,14 @@ class MaisScreen extends StatelessWidget {
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1A1A1A),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Sair da conta', style: TextStyle(color: Colors.white)),
-        content: const Text('Tem certeza que deseja sair?', style: TextStyle(color: Colors.white70)),
+        title: const Text(
+          'Sair da conta',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: const Text(
+          'Tem certeza que deseja sair?',
+          style: TextStyle(color: Colors.white70),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -78,7 +86,10 @@ class MaisScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Sair', style: TextStyle(color: Colors.redAccent)),
+            child: const Text(
+              'Sair',
+              style: TextStyle(color: Colors.redAccent),
+            ),
           ),
         ],
       ),
@@ -99,7 +110,11 @@ class MaisScreen extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(4, 20, 4, 8),
       child: Text(
         titulo,
-        style: const TextStyle(color: Colors.white38, fontSize: 12, fontWeight: FontWeight.w600),
+        style: const TextStyle(
+          color: Colors.white38,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -113,27 +128,41 @@ class MaisScreen extends StatelessWidget {
     Color? corIcone,
     bool destrutivo = false,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
         color: const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(12),
-      ),
-      child: ListTile(
-        onTap: onTap,
-        leading: Icon(icone, color: corIcone ?? (destrutivo ? Colors.redAccent : roxo)),
-        title: Text(
-          titulo,
-          style: TextStyle(color: destrutivo ? Colors.redAccent : Colors.white, fontSize: 14),
-        ),
-        subtitle: subtitulo != null
-            ? Text(subtitulo, style: const TextStyle(color: Colors.white38, fontSize: 12))
-            : null,
-        trailing: destrutivo ? null : const Icon(Icons.chevron_right, color: Colors.white38),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-  }
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
+          onTap: onTap,
+          leading: Icon(
+            icone,
+            color: corIcone ?? (destrutivo ? Colors.redAccent : roxo),
+          ),
+          title: Text(
+            titulo,
+            style: TextStyle(
+              color: destrutivo ? Colors.redAccent : Colors.white,
+              fontSize: 14,
+            ),
+          ),
+          subtitle: subtitulo != null
+              ? Text(
+                  subtitulo,
+                  style: const TextStyle(color: Colors.white38, fontSize: 12),
+                )
+              : null,
+          trailing: destrutivo
+              ? null
+              : const Icon(Icons.chevron_right, color: Colors.white38),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ), // Fecha ListTile
+      ), // Fecha Material
+    ); // Fecha Padding
+  } // Fecha o método _item
 
   @override
   Widget build(BuildContext context) {
@@ -149,19 +178,35 @@ class MaisScreen extends StatelessWidget {
                 CircleAvatar(
                   radius: 32,
                   backgroundColor: roxo.withOpacity(0.15),
-                  backgroundImage: fotoPath != null ? FileImage(File(fotoPath!)) : null,
-                  child: fotoPath == null ? const Icon(Icons.person, color: roxo, size: 32) : null,
+                  backgroundImage: fotoPath != null
+                      ? FileImage(File(fotoPath!))
+                      : null,
+                  child: fotoPath == null
+                      ? const Icon(Icons.person, color: roxo, size: 32)
+                      : null,
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(apelido.isNotEmpty ? apelido : 'Usuário',
-                          style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                      Text(
+                        apelido.isNotEmpty ? apelido : 'Usuário',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       if (email != null) ...[
                         const SizedBox(height: 2),
-                        Text(email!, style: const TextStyle(color: Colors.white54, fontSize: 13)),
+                        Text(
+                          email!,
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 13,
+                          ),
+                        ),
                       ],
                     ],
                   ),
@@ -188,7 +233,9 @@ class MaisScreen extends StatelessWidget {
               subtitulo: 'Pluggy Connect',
               onTap: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const ContasConectadasScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => const ContasConectadasScreen(),
+                  ),
                 );
               },
             ),
@@ -234,7 +281,9 @@ class MaisScreen extends StatelessWidget {
               subtitulo: 'Frequência e nível de intervenção',
               onTap: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const RecomendacoesScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => const RecomendacoesScreen(),
+                  ),
                 );
               },
             ),
@@ -266,7 +315,9 @@ class MaisScreen extends StatelessWidget {
               titulo: 'Dificuldade financeira',
               onTap: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const EditarDificuldadeScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => const EditarDificuldadeScreen(),
+                  ),
                 );
               },
             ),
@@ -287,9 +338,9 @@ class MaisScreen extends StatelessWidget {
               icone: Icons.info_outline,
               titulo: 'Sobre o Valora',
               onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const SobreScreen()),
-                );
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const SobreScreen()));
               },
             ),
 
