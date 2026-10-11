@@ -63,18 +63,19 @@ class _NotificacoesScreenState extends State<NotificacoesScreen> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF1A1A1A),
-                borderRadius: BorderRadius.circular(12),
-              ),
+            Material(
+              color: const Color(0xFF1A1A1A),
+              borderRadius: BorderRadius.circular(12),
+              clipBehavior: Clip.antiAlias,
               child: SwitchListTile(
                 value: _atalhoAtivo,
                 onChanged: _alterarAtalho,
-                activeColor: roxo,
+                activeThumbColor: roxo,
                 secondary: const Icon(Icons.push_pin_outlined, color: roxo),
-                title: const Text('Atalho na barra de notificações',
-                    style: TextStyle(color: Colors.white, fontSize: 14)),
+                title: const Text(
+                  'Atalho na barra de notificações',
+                  style: TextStyle(color: Colors.white, fontSize: 14),
+                ),
                 subtitle: const Text(
                   'Mostra um botão fixo de "Nova transação" na barra de notificações, acessível até na tela de bloqueio — toque nele pra abrir o app direto na tela de adicionar',
                   style: TextStyle(color: Colors.white54, fontSize: 12),
@@ -82,18 +83,19 @@ class _NotificacoesScreenState extends State<NotificacoesScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF1A1A1A),
-                borderRadius: BorderRadius.circular(12),
-              ),
+            Material(
+              color: const Color(0xFF1A1A1A),
+              borderRadius: BorderRadius.circular(12),
+              clipBehavior: Clip.antiAlias,
               child: SwitchListTile(
                 value: _dicasAtivo,
                 onChanged: _carregandoDicas ? null : _alterarDicas,
-                activeColor: roxo,
+                activeThumbColor: roxo,
                 secondary: const Icon(Icons.lightbulb_outline, color: roxo),
-                title: const Text('Dicas e recomendações',
-                    style: TextStyle(color: Colors.white, fontSize: 14)),
+                title: const Text(
+                  'Dicas e recomendações',
+                  style: TextStyle(color: Colors.white, fontSize: 14),
+                ),
                 subtitle: const Text(
                   'Receba notificações com dicas, insights e recomendações personalizadas sobre suas finanças',
                   style: TextStyle(color: Colors.white54, fontSize: 12),

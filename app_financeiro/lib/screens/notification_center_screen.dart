@@ -1,145 +1,135 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/intelligence_service.dart';
 
-/// Um item de notificação interna do app (diferente da notificação do
-/// sistema Android/iOS) — dicas, recomendações, alertas e atualizações
-/// que aparecem dentro do próprio Valora.
-class NotificacaoApp {
-  final IconData icone;
-  final String titulo;
-  final String descricao;
-  final DateTime data;
-  final bool lida;
-
-  const NotificacaoApp({
-    required this.icone,
-    required this.titulo,
-    required this.descricao,
-    required this.data,
-    this.lida = false,
-  });
-}
-
-/// Tela "Notificações" (sino no topo do Dashboard): mostra dicas,
-/// recomendações, alertas e atualizações do app.
-///
-/// Por enquanto usa dados fictícios (mock) — quando a parte de
-/// inteligência (identificação de padrões de consumo) estiver pronta no
-/// back-end, essa lista deve vir de um GET /notificacoes.
-class NotificationCenterScreen extends StatelessWidget {
+/// Central de alertas reais do motor de análise financeira.
+/// Não são notificações push do Android: são alertas exibidos no aplicativo.
+class NotificationCenterScreen extends StatefulWidget {
   const NotificationCenterScreen({super.key});
 
-  static const roxo = Color(0xFF8A2BE2);
+  @override
+  State<NotificationCenterScreen> createState() => _NotificationCenterScreenState();
+}
 
-  static final List<NotificacaoApp> _mock = [
-    NotificacaoApp(
-      icone: Icons.lightbulb_outline,
-      titulo: 'Dica: gastos com alimentação',
-      descricao: 'Você gastou 22% do seu orçamento com alimentação este mês. Que tal planejar as refeições da semana?',
-      data: DateTime.now().subtract(const Duration(hours: 2)),
-    ),
-    NotificacaoApp(
-      icone: Icons.trending_up,
-      titulo: 'Progresso da sua meta',
-      descricao: 'Você já alcançou 20% da meta "Reserva de Emergência". Continue assim!',
-      data: DateTime.now().subtract(const Duration(hours: 5)),
-    ),
-    NotificacaoApp(
-      icone: Icons.warning_amber_outlined,
-      titulo: 'Alerta de gasto incomum',
-      descricao: 'Identificamos um gasto de R\$ 187,40 em Alimentação, acima da sua média para essa categoria.',
-      data: DateTime.now().subtract(const Duration(days: 1)),
-      lida: true,
-    ),
-    NotificacaoApp(
-      icone: Icons.info_outline,
-      titulo: 'Novidade no Valora',
-      descricao: 'Agora você pode conectar suas contas bancárias via Pluggy Connect direto pelo Menu.',
-      data: DateTime.now().subtract(const Duration(days: 3)),
-      lida: true,
-    ),
-  ];
+class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
+  final _service = IntelligenceService();
+  late Future<Map<String, dynamic>> _future;
+  bool _dicasAtivas = true;
+  final Set<String> _lidas = {};
 
-  String _formatarData(DateTime data) {
-    final agora = DateTime.now();
-    final diferenca = agora.difference(data);
-    if (diferenca.inHours < 1) return 'Agora há pouco';
-    if (diferenca.inHours < 24) return 'Há ${diferenca.inHours}h';
-    if (diferenca.inDays == 1) return 'Ontem';
-    return 'Há ${diferenca.inDays} dias';
+  @override
+  void initState() {
+    super.initState();
+    _future = _service.insights();
+    _carregarPreferencias();
+  }
+
+  Future<void> _carregarPreferencias() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _dicasAtivas = prefs.getBool('notificacoes_dicas_ativas') ?? true;
+      _lidas.addAll(prefs.getStringList('valora_alertas_lidos') ?? []);
+    });
+  }
+
+  Future<void> _marcarLida(String chave) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() => _lidas.add(chave));
+    await prefs.setStringList('valora_alertas_lidos', _lidas.toList());
+  }
+
+  Future<void> _atualizar() async {
+    final resultado = await _service.insights();
+
+    if (!mounted) return;
+
+    setState(() {
+      _future = Future.value(resultado);
+    });
+  }
+
+  IconData _icone(String nivel) {
+    switch (nivel) {
+      case 'critical': return Icons.error_outline;
+      case 'warning': return Icons.warning_amber_outlined;
+      case 'success': return Icons.trending_down;
+      default: return Icons.lightbulb_outline;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Notificações')),
-      body: SafeArea(
-        child: _mock.isEmpty
-            ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 72,
-                      height: 72,
-                      decoration: BoxDecoration(color: roxo.withOpacity(0.15), shape: BoxShape.circle),
-                      child: const Icon(Icons.notifications_none, color: roxo, size: 36),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text('Nenhuma notificação por enquanto',
-                        style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              )
-            : ListView.builder(
-                padding: const EdgeInsets.all(20),
-                itemCount: _mock.length,
-                itemBuilder: (context, index) {
-                  final n = _mock[index];
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: n.lida ? const Color(0xFF1A1A1A) : roxo.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(12),
-                      border: n.lida ? null : Border.all(color: roxo.withOpacity(0.4)),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(color: roxo.withOpacity(0.15), shape: BoxShape.circle),
-                          child: Icon(n.icone, color: roxo, size: 20),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(n.titulo,
-                                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
-                              const SizedBox(height: 4),
-                              Text(n.descricao,
-                                  style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4)),
-                              const SizedBox(height: 6),
-                              Text(_formatarData(n.data),
-                                  style: const TextStyle(color: Colors.white38, fontSize: 11)),
-                            ],
-                          ),
-                        ),
-                        if (!n.lida)
-                          Container(
-                            width: 8,
-                            height: 8,
-                            margin: const EdgeInsets.only(top: 4),
-                            decoration: const BoxDecoration(color: roxo, shape: BoxShape.circle),
-                          ),
-                      ],
+      appBar: AppBar(title: const Text('Alertas financeiros')),
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: _future,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done && !snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Não foi possível carregar os alertas.'),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _future = _service.insights();
+                      });
+                    },
+                    child: const Text('Tentar novamente'),
+                  ),
+                ],
+              ),
+            );
+          }
+          final data = snapshot.data ?? {};
+          final alertas = (data['alerts'] as List<dynamic>? ?? [])
+              .map((item) => Map<String, dynamic>.from(item as Map))
+              .where((item) => _dicasAtivas || item['level'] == 'critical')
+              .toList();
+          return RefreshIndicator(
+            onRefresh: _atualizar,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              children: [
+                Text('Análise de ${data['month']}/${data['year']}', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                if (!_dicasAtivas) const Card(child: ListTile(
+                  leading: Icon(Icons.notifications_off_outlined),
+                  title: Text('Dicas desativadas'),
+                  subtitle: Text('Ative em Menu > Notificações para visualizar todas as recomendações.'),
+                )),
+                if (alertas.isEmpty) const Card(child: ListTile(
+                  leading: Icon(Icons.check_circle_outline),
+                  title: Text('Nenhum alerta neste momento'),
+                  subtitle: Text('Registre suas movimentações para receber análises personalizadas.'),
+                )),
+                for (final alerta in alertas) Builder(builder: (context) {
+                  final chave = '${data['year']}-${data['month']}-${alerta['code']}';
+                  final lida = _lidas.contains(chave);
+                  return Card(
+                    child: ListTile(
+                      leading: Icon(_icone('${alerta['level']}'), color: alerta['level'] == 'critical' ? Colors.redAccent : null),
+                      title: Text('${alerta['title']}', style: TextStyle(fontWeight: lida ? FontWeight.normal : FontWeight.bold)),
+                      subtitle: Text('${alerta['message']}'),
+                      trailing: lida ? const Icon(Icons.done, size: 18) : const Icon(Icons.circle, size: 10, color: Color(0xFF8A2BE2)),
+                      onTap: () => _marcarLida(chave),
                     ),
                   );
-                },
-              ),
+                }),
+                const SizedBox(height: 12),
+                Text('${data['disclaimer'] ?? 'Orientações educativas baseadas em regras.'}', style: Theme.of(context).textTheme.bodySmall),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
