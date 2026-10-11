@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/meta_model.dart';
+import '../services/goal_service.dart';
 
 /// Tela "Nova meta" — usuário preenche nome, valor desejado, valor atual e
 /// data limite. Ao salvar, devolve um [Meta] pra tela anterior via
@@ -15,7 +16,8 @@ import '../models/meta_model.dart';
 ///   // TODO: enviar novaMeta.toJson() pro back-end (POST /metas)
 /// }
 class AddMetaScreen extends StatefulWidget {
-  const AddMetaScreen({super.key});
+  final Meta? meta;
+  const AddMetaScreen({super.key, this.meta});
 
   @override
   State<AddMetaScreen> createState() => _AddMetaScreenState();
@@ -36,6 +38,18 @@ class _AddMetaScreenState extends State<AddMetaScreen> {
   bool _salvando = false;
 
   @override
+  void initState() {
+    super.initState();
+    final meta = widget.meta;
+    if (meta != null) {
+      _nomeController.text = meta.nome;
+      _valorDesejadoController.text = meta.valorDesejado.toStringAsFixed(2);
+      _valorAtualController.text = meta.valorAtual.toStringAsFixed(2);
+      _dataLimite = meta.dataLimite;
+    }
+  }
+
+  @override
   void dispose() {
     _nomeController.dispose();
     _valorDesejadoController.dispose();
@@ -44,7 +58,7 @@ class _AddMetaScreenState extends State<AddMetaScreen> {
   }
 
   double _parse(String texto) {
-    final normalizado = texto.replaceAll('.', '').replaceAll(',', '.');
+    final normalizado = texto.contains(',') ? texto.replaceAll('.', '').replaceAll(',', '.') : texto;
     return double.tryParse(normalizado) ?? 0;
   }
 
@@ -70,29 +84,42 @@ class _AddMetaScreenState extends State<AddMetaScreen> {
       return;
     }
 
+    final target = _parse(_valorDesejadoController.text);
+    final current = _parse(_valorAtualController.text);
+    if (current < 0 || current > target) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('O valor atual deve ficar entre zero e o valor desejado')),
+      );
+      return;
+    }
     setState(() => _salvando = true);
 
     final meta = Meta(
+      id: widget.meta?.id,
       nome: _nomeController.text.trim(),
       valorDesejado: _parse(_valorDesejadoController.text),
       valorAtual: _parse(_valorAtualController.text),
       dataLimite: _dataLimite!,
     );
 
-    // TODO: enviar meta.toJson() pro back-end (POST /metas) quando o Luís
-    // tiver o endpoint pronto — por enquanto só devolve a meta pra tela
-    // anterior guardar localmente.
-    await Future.delayed(const Duration(milliseconds: 400));
-
-    if (!mounted) return;
-    setState(() => _salvando = false);
-    Navigator.of(context).pop(meta);
+    try {
+      final saved = await GoalService().save(meta);
+      if (!mounted) return;
+      Navigator.of(context).pop(saved);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Não foi possível salvar a meta: $error')),
+      );
+    } finally {
+      if (mounted) setState(() => _salvando = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Nova meta')),
+      appBar: AppBar(title: Text(widget.meta == null ? 'Nova meta' : 'Editar meta')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),

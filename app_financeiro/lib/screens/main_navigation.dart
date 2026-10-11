@@ -6,7 +6,9 @@ import 'add_transaction_screen.dart';
 import 'chat_ia_screen.dart';
 import 'mais_screen.dart';
 import '../services/notification_service.dart';
+import '../services/transaction_service.dart';
 import '../models/meta_model.dart';
+import '../services/goal_service.dart';
 import '../widgets/recent_transactions_section.dart';
 import '../widgets/transaction_history_screen.dart';
 
@@ -36,13 +38,70 @@ class _MainNavigationState extends State<MainNavigation> {
   String? _telefone;
   String? _fotoPath;
   bool _notificacaoFixaAtiva = true;
-  late List<TransacaoMock> _transacoes = List.of(RecentTransactionsSection.mock);
-  final List<Meta> _metas = [];
+  List<TransacaoMock> _transacoes = [];
+  final _transactionService = TransactionService();
+  List<Meta> _metas = [];
+  final _goalService = GoalService();
+  int _dashboardRevision = 0;
 
   @override
   void initState() {
     super.initState();
     _ativarNotificacaoFixa();
+    _carregarTransacoes();
+    _carregarMetas();
+  }
+
+  Future<void> _carregarTransacoes() async {
+    try {
+      final items = await _transactionService.getTransactions();
+      if (mounted) setState(() { _transacoes = items; _dashboardRevision++; });
+    } catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao carregar transações: $error')));
+    }
+  }
+
+  Future<void> _carregarMetas() async {
+    try {
+      final metas = await _goalService.list();
+      if (mounted) setState(() { _metas = metas; _dashboardRevision++; });
+    } catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao carregar metas: $error')),
+      );
+    }
+  }
+
+  Future<void> _editarMeta(Meta meta) async {
+    final updated = await Navigator.of(context).push<Meta>(
+      MaterialPageRoute(builder: (_) => AddMetaScreen(meta: meta)),
+    );
+    if (updated != null && mounted) await _carregarMetas();
+  }
+
+  Future<void> _excluirMeta(Meta meta) async {
+    if (meta.id == null) return;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Excluir meta?'),
+        content: Text('Deseja excluir "${meta.nome}"?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Excluir')),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    try {
+      await _goalService.delete(meta.id!);
+      if (mounted) await _carregarMetas();
+    } catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao excluir meta: $error')),
+      );
+    }
   }
 
   Future<void> _ativarNotificacaoFixa() async {
@@ -64,7 +123,7 @@ class _MainNavigationState extends State<MainNavigation> {
       MaterialPageRoute(builder: (_) => const AddTransactionScreen()),
     );
     if (novaTransacao != null && mounted) {
-      setState(() => _transacoes.insert(0, novaTransacao));
+      await _carregarTransacoes();
     }
   }
 
@@ -73,7 +132,7 @@ class _MainNavigationState extends State<MainNavigation> {
       MaterialPageRoute(builder: (_) => const AddMetaScreen()),
     );
     if (novaMeta != null && mounted) {
-      setState(() => _metas.add(novaMeta));
+      await _carregarMetas();
     }
   }
 
@@ -98,9 +157,9 @@ class _MainNavigationState extends State<MainNavigation> {
   }
 
   List<Widget> get _telas => [
-        DashboardScreen(apelido: _apelido, transacoes: _transacoes),
-        TransactionHistoryScreen(transacoes: _transacoes),
-        MetasScreen(metas: _metas, onCriarMeta: _abrirNovaMeta),
+        DashboardScreen(key: ValueKey(_dashboardRevision), apelido: _apelido, transacoes: _transacoes, metas: _metas),
+        TransactionHistoryScreen(transacoes: _transacoes, onChanged: _carregarTransacoes),
+        MetasScreen(metas: _metas, onCriarMeta: _abrirNovaMeta, onEditarMeta: _editarMeta, onExcluirMeta: _excluirMeta),
         MaisScreen(
           apelido: _apelido,
           email: _email,

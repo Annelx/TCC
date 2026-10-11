@@ -1,0 +1,10 @@
+VALORA — Patch Flutter de autenticação
+
+1. Copie o conteúdo da pasta app_financeiro sobre C:\Users\luish\TCC\app_financeiro.
+2. Execute flutter pub get e flutter analyze lib/screens lib/services.
+3. Execute flutter run -d emulator-5554 com Uvicorn em 0.0.0.0:8000.
+4. Crie um NOVO usuário; no EMAIL_MODE=console o código aparecerá no terminal do backend.
+5. Verifique código, faça login e reinicie o aplicativo para testar sessão.
+6. O onboarding ainda não persiste no backend; esta etapa será tratada no Sprint 2.
+7. Biometria, Google e recuperação de senha permanecem pendentes; não os anuncie como concluídos.
+8. Em Android físico use --dart-define=API_BASE_URL=http://IP_DO_PC:8000.

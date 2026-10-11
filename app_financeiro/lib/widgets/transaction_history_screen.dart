@@ -1,3 +1,4 @@
+import '../services/transaction_service.dart';
 import 'package:flutter/material.dart';
 import 'recent_transactions_section.dart';
 import '../screens/add_transaction_screen.dart';
@@ -6,8 +7,9 @@ import '../screens/add_transaction_screen.dart';
 /// filtro por período (mês/ano).
 class TransactionHistoryScreen extends StatefulWidget {
   final List<TransacaoMock> transacoes;
+  final Future<void> Function()? onChanged;
 
-  const TransactionHistoryScreen({super.key, required this.transacoes});
+  const TransactionHistoryScreen({super.key, required this.transacoes, this.onChanged});
 
   @override
   State<TransactionHistoryScreen> createState() => _TransactionHistoryScreenState();
@@ -227,14 +229,28 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
                         return InkWell(
                           borderRadius: BorderRadius.circular(12),
-                          onTap: () {
-                            Navigator.of(context).push<TransacaoMock>(
-                              MaterialPageRoute(
-                                builder: (_) => AddTransactionScreen(transacaoParaEditar: t),
-                              ),
+                          onTap: () async {
+                            final result = await Navigator.of(context).push<TransacaoMock>(
+                              MaterialPageRoute(builder: (_) => AddTransactionScreen(transacaoParaEditar: t)),
                             );
-                            // TODO: quando vier do backend, atualizar a lista
-                            // com o resultado (transação editada) aqui.
+                            if (result != null) await widget.onChanged?.call();
+                          },
+                          onLongPress: t.id == null ? null : () async {
+                            final confirmed = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+                              title: const Text('Excluir transação?'),
+                              content: Text(t.descricao),
+                              actions: [
+                                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+                                TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Excluir')),
+                              ],
+                            ));
+                            if (confirmed != true) return;
+                            try {
+                              await TransactionService().remove(t.id!);
+                              await widget.onChanged?.call();
+                            } catch (error) {
+                              if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao excluir: $error')));
+                            }
                           },
                           child: Container(
                           margin: const EdgeInsets.only(bottom: 10),
