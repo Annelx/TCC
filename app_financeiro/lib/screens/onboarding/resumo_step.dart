@@ -7,13 +7,15 @@ import 'onboarding_step_scaffold.dart';
 class ResumoStep extends StatelessWidget {
   final OnboardingData dados;
   final VoidCallback onVoltar;
-  final VoidCallback onConcluir;
+  final VoidCallback? onConcluir;
+  final bool salvando;
 
   const ResumoStep({
     super.key,
     required this.dados,
     required this.onVoltar,
     required this.onConcluir,
+    this.salvando = false,
   });
 
   static const _labelsObjetivos = {
@@ -101,7 +103,9 @@ class ResumoStep extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16),
         ),
-        child: const Text('Concluir e começar'),
+        child: salvando
+            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+            : const Text('Concluir e começar'),
       ),
       child: Container(
         width: double.infinity,

@@ -8,8 +8,10 @@ import '../models/meta_model.dart';
 class MetasScreen extends StatelessWidget {
   final List<Meta> metas;
   final VoidCallback onCriarMeta;
+  final ValueChanged<Meta> onEditarMeta;
+  final ValueChanged<Meta> onExcluirMeta;
 
-  const MetasScreen({super.key, required this.metas, required this.onCriarMeta});
+  const MetasScreen({super.key, required this.metas, required this.onCriarMeta, required this.onEditarMeta, required this.onExcluirMeta});
 
   static const roxo = Color(0xFF8A2BE2);
   static const _meses = [
@@ -70,6 +72,14 @@ class MetasScreen extends StatelessWidget {
                             Text(
                               '${(progresso * 100).toInt()}%',
                               style: const TextStyle(color: roxo, fontWeight: FontWeight.bold, fontSize: 14),
+                            ),
+                            PopupMenuButton<String>(
+                              tooltip: 'Opções da meta',
+                              onSelected: (value) => value == 'edit' ? onEditarMeta(meta) : onExcluirMeta(meta),
+                              itemBuilder: (_) => const [
+                                PopupMenuItem(value: 'edit', child: Text('Editar')),
+                                PopupMenuItem(value: 'delete', child: Text('Excluir')),
+                              ],
                             ),
                           ],
                         ),

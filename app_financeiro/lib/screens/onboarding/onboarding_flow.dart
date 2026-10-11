@@ -9,6 +9,7 @@ import 'dificuldade_step.dart';
 import 'preferencias_step.dart';
 import 'resumo_step.dart';
 import '../main_navigation.dart';
+import '../../services/onboarding_service.dart';
 
 /// Widget "pai" dos primeiros passos: controla o PageView com os 8 passos
 /// do onboarding e vai acumulando as respostas em [OnboardingData].
@@ -37,6 +38,7 @@ class OnboardingFlow extends StatefulWidget {
 class _OnboardingFlowState extends State<OnboardingFlow> {
   final _pageController = PageController();
   final _dados = OnboardingData();
+  bool _salvando = false;
 
   // Mesmos ids/labels usados no MetasStep — usado só pra exibir o nome
   // bonito da meta escolhida no passo 5.
@@ -76,14 +78,26 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     );
   }
 
-  void _concluirOnboarding() {
-    // TODO: enviar _dados.toJson() pro back-end (POST /onboarding/complete)
-    // antes de navegar, quando o Luís tiver o endpoint pronto.
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (context) => MainNavigation(apelido: _dados.apelido, email: _dados.email),
-      ),
-    );
+  Future<void> _concluirOnboarding() async {
+    if (_salvando) return;
+    setState(() => _salvando = true);
+    try {
+      await OnboardingService().complete(_dados);
+      if (!mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (_) => MainNavigation(apelido: _dados.apelido, email: _dados.email),
+        ),
+        (route) => false,
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Não foi possível salvar o perfil: $error')),
+      );
+    } finally {
+      if (mounted) setState(() => _salvando = false);
+    }
   }
 
   @override
@@ -188,7 +202,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           ResumoStep(
             dados: _dados,
             onVoltar: _voltarPagina,
-            onConcluir: _concluirOnboarding,
+            onConcluir: _salvando ? null : _concluirOnboarding,
+            salvando: _salvando,
           ),
         ],
       ),

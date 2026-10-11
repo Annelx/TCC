@@ -41,6 +41,31 @@ class ApiService {
     return _handleResponse(response);
   }
 
+  Future<Map<String, dynamic>> put(String endpoint, {required Map<String, dynamic> body, String? token}) async {
+    final response = await http.put(Uri.parse('$baseUrl$endpoint'),
+      headers: {'Content-Type': 'application/json', if (token != null) 'Authorization': 'Bearer $token'},
+      body: jsonEncode(body)).timeout(const Duration(seconds: 15));
+    return _handleResponse(response);
+  }
+
+  Future<void> delete(String endpoint, {String? token}) async {
+    final response = await http.delete(Uri.parse('$baseUrl$endpoint'),
+      headers: {if (token != null) 'Authorization': 'Bearer $token'}).timeout(const Duration(seconds: 15));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      _handleResponse(response);
+    }
+  }
+
+  Future<List<dynamic>> getList(String endpoint, {String? token}) async {
+    final response = await http.get(Uri.parse('$baseUrl$endpoint'),
+      headers: {if (token != null) 'Authorization': 'Bearer $token'}).timeout(const Duration(seconds: 15));
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return jsonDecode(response.body) as List<dynamic>;
+    }
+    _handleResponse(response);
+    throw StateError('Resposta inesperada');
+  }
+
   Map<String, dynamic> _handleResponse(http.Response response) {
     final dynamic data = response.body.isNotEmpty
         ? jsonDecode(response.body)

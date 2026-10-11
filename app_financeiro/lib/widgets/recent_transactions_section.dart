@@ -11,6 +11,7 @@ enum OrigemTransacao { manual, openFinance }
 /// descricao, valor, data, tipo, origem) devem servir de referência do que
 /// precisa existir lá.
 class TransacaoMock {
+  final int? id;
   final String categoria;
   final IconData icone;
   final String descricao;
@@ -21,6 +22,7 @@ class TransacaoMock {
   final String? nomeBanco; // só preenchido quando origem == openFinance
 
   const TransacaoMock({
+    this.id,
     required this.categoria,
     required this.icone,
     required this.descricao,

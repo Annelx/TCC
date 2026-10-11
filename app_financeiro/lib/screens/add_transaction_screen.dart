@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/recent_transactions_section.dart';
+import '../services/transaction_service.dart';
 
 /// Tela "Nova transação" / "Editar transação". Se [transacaoParaEditar] for
 /// passada, o formulário já vem preenchido com os dados dela (modo edição);
@@ -95,6 +96,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     setState(() => _salvando = true);
 
     final transacao = TransacaoMock(
+      id: widget.transacaoParaEditar?.id,
       categoria: _categoriaSelecionada,
       icone: _iconeDaCategoria(_categoriaSelecionada),
       descricao: _descricaoController.text.trim(),
@@ -107,13 +109,16 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       nomeBanco: widget.transacaoParaEditar?.nomeBanco,
     );
 
-    // TODO: enviar a transação pro back-end quando o Luís tiver o endpoint
-    // pronto — POST /transacoes (criação) ou PUT /transacoes/:id (edição).
-    await Future.delayed(const Duration(milliseconds: 400));
-
-    if (!mounted) return;
-    setState(() => _salvando = false);
-    Navigator.of(context).pop(transacao);
+    try {
+      final saved = await TransactionService().save(transacao);
+      if (!mounted) return;
+      Navigator.of(context).pop(saved);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Não foi possível salvar: $error')));
+    } finally {
+      if (mounted) setState(() => _salvando = false);
+    }
   }
 
   @override
