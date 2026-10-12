@@ -1,0 +1,39 @@
+﻿# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Credenciais e ambiente
+.env
+.env.*
+!.env.example
+
+# Backups e arquivos compactados
+backup/
+*.dump
+*.zip
+
+# Arquivos temporarios
+patch_auth/
+patch_flutter_auth/
+patch_sprint2/
+login_screen_atual.dart
+
+# Pastas locais do editor
+.vscode/
+.idea/
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
+
+# Flutter e Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+*.log
