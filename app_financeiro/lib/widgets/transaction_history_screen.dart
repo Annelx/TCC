@@ -146,6 +146,35 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     );
   }
 
+  Future<void> _excluirTransacao(TransacaoMock transacao) async {
+    if (transacao.id == null) return;
+    final confirmado = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Excluir movimentação?'),
+        content: Text('Deseja excluir "${transacao.descricao}"? Esta ação não pode ser desfeita.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Excluir')),
+        ],
+      ),
+    );
+    if (confirmado != true || !mounted) return;
+    try {
+      await TransactionService().remove(transacao.id!);
+      await widget.onChanged?.call();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Movimentação excluída com sucesso.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Não foi possível excluir: $error')),
+      );
+    }
+  }
+
   String _formatarData(DateTime data) {
     return '${data.day.toString().padLeft(2, '0')}/${data.month.toString().padLeft(2, '0')}/${data.year}';
   }
@@ -235,23 +264,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                             );
                             if (result != null) await widget.onChanged?.call();
                           },
-                          onLongPress: t.id == null ? null : () async {
-                            final confirmed = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
-                              title: const Text('Excluir transação?'),
-                              content: Text(t.descricao),
-                              actions: [
-                                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
-                                TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Excluir')),
-                              ],
-                            ));
-                            if (confirmed != true) return;
-                            try {
-                              await TransactionService().remove(t.id!);
-                              await widget.onChanged?.call();
-                            } catch (error) {
-                              if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao excluir: $error')));
-                            }
-                          },
+                          onLongPress: t.id == null ? null : () => _excluirTransacao(t),
                           child: Container(
                           margin: const EdgeInsets.only(bottom: 10),
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -308,6 +321,12 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                                 '$sinal R\$ ${t.valor.toStringAsFixed(2)}',
                                 style: TextStyle(color: cor, fontWeight: FontWeight.bold, fontSize: 14),
                               ),
+                              if (t.id != null)
+                                IconButton(
+                                  tooltip: 'Excluir movimentação',
+                                  icon: const Icon(Icons.delete_outline, color: Color(0xFFFF6B6B)),
+                                  onPressed: () => _excluirTransacao(t),
+                                ),
                             ],
                           ),
                         ),
