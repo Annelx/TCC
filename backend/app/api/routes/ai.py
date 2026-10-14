@@ -14,6 +14,7 @@ from app.db.database import get_db
 from app.models.goal import Goal
 from app.models.transaction import Transaction
 from app.models.user import User
+from app.core.config import settings
 
 router = APIRouter(prefix='/ai', tags=['Assistente financeiro'])
 
@@ -77,9 +78,9 @@ async def chat(payload: ChatRequest, user: User = Depends(get_current_user), db:
     declared = user.monthly_income or Decimal('0')
     answer = local_answer(payload.message, income, expenses, declared, categories, goals, len(transactions))
     provider = 'rules_based'
-    key = os.getenv('GEMINI_API_KEY', '').strip()
+    key = (settings.gemini_api_key or '').strip()
     if key:
-        model = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash').strip()
+        model = settings.gemini_model.strip()
         context = {
             'periodo': f'{now.year}-{now.month:02d}',
             'receitas_registradas': str(income), 'despesas_registradas': str(expenses),
