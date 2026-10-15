@@ -104,7 +104,16 @@ async def chat(payload: ChatRequest, user: User = Depends(get_current_user), db:
                 generated = response.json()['candidates'][0]['content']['parts'][0]['text'].strip()
                 if generated:
                     answer, provider = generated, 'gemini'
-        except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError):
-            pass  # Falha externa: mantém resposta local segura.
+        except httpx.HTTPStatusError as exc:
+            print(
+                f"[GEMINI] Erro HTTP: {exc.response.status_code}",
+                flush=True,
+            )
+
+        except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as exc:
+            print(
+                f"[GEMINI] Falha: {type(exc).__name__}",
+                flush=True,
+            )
     return {'reply': answer, 'mode': provider, 'period': f'{now.year}-{now.month:02d}',
             'disclaimer': 'Orientação educativa automatizada; não substitui aconselhamento financeiro profissional.'}
